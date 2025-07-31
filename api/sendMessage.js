@@ -20,14 +20,14 @@ export default async function handler(req, res) {
     }
 
     // Отправляем сообщение в Telegram
-    const response = await fetch('/api/sendMessage', {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        chatId: chatId,
-        text: message
+        chat_id: chatId,
+        text: text,
       }),
     });
 
