@@ -545,6 +545,10 @@ section {
     cursor: not-allowed;
 }
 
+.no-time-slots-message {
+    pading: 5px;
+}
+
 input:invalid, select:invalid {
     border-color: #ddd; 
 }
