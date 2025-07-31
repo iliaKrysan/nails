@@ -34,15 +34,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 });
-// Более универсальный вариант с созданием span для года
+//обновление года в футере
 document.addEventListener('DOMContentLoaded', function () {
   const footerText = document.querySelector('.footer-bottom p');
   if (footerText) {
-    // Создаем span для года, если его еще нет
     if (!footerText.querySelector('.current-year')) {
       footerText.innerHTML = footerText.innerHTML.replace('2023', '<span class="current-year">2023</span>');
     }
-    // Обновляем год
     const yearElement = footerText.querySelector('.current-year');
     if (yearElement) {
       yearElement.textContent = new Date().getFullYear();
@@ -117,6 +115,20 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Функция для показа сообщения об успехе
+  function showSuccessMessage(message) {
+    createSuccessPopup(message);
+  }
+
+  // Функция для показа сообщения об ошибке
+  function showErrorMessage(message) {
+    // Можно использовать тот же popup, но с другим стилем
+    createSuccessPopup(message); // Для простоты используем тот же, можно доработать
+    // Или просто alert, или другая реализация
+    // alert(message);
+  }
+
   // --- Конец функций для работы с Pop-up ---
   // Инициализация календаря
   function initDatepicker() {
@@ -352,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return phone;
   }
   // Отправка формы
-  form.addEventListener('submit', function (e) {
+  form.addEventListener('submit', async function (e) { // Добавлен async
     e.preventDefault();
     let isValid = true;
     // Сбрасываем ошибки
@@ -439,31 +451,36 @@ document.addEventListener('DOMContentLoaded', function () {
 💅 Услуга: ${formValues.service}
 📅 Дата: ${formValues.date}
 ⏰ Время: ${formValues.time}`;
-      fetch('http://localhost:3000/sendMessage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          chatId: '732983471',
-          text: message
-        })
-      })
-        .then(response => {
-          if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
-          return response.json();
-        })
-        .then(data => {
-          console.log('Сообщение отправлено', data);
-          // Заменено alert на pop-up
-          createSuccessPopup('Ваша заявка успешно отправлена! Скоро мы свяжемся с Вами для уточнения деталей.');
-          form.reset();
-        })
-        .catch(error => {
-          console.error('Ошибка отправки:', error);
-          // Заменено alert на pop-up
-          createSuccessPopup('Ошибка при отправке заявки. Пожалуйста, попробуйте позже.');
+
+      try {
+        const response = await fetch('/api/sendMessage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chatId: '732983471', // Замените на ваш Chat ID
+            text: message
+          })
         });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // Показываем сообщение об успехе
+          showSuccessMessage('Спасибо! Мы свяжемся с вами для подтверждения записи.');
+          form.reset(); // Очищаем форму правильно
+          // Скрываем выпадающие списки, если они открыты
+          if (datepicker) datepicker.style.display = 'none';
+          if (timeSlots) timeSlots.style.display = 'none';
+        } else {
+          showErrorMessage('Ошибка отправки. Попробуйте еще раз.');
+          console.error('Ошибка сервера:', result.error || result);
+        }
+      } catch (error) {
+        showErrorMessage('Ошибка отправки. Проверьте подключение к интернету.');
+        console.error('Ошибка сети:', error);
+      }
     }
   }); // Закрытие addEventListener('submit', ...)
 }); // Закрытие DOMContentLoaded для формы
